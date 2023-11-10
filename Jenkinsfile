@@ -2,7 +2,7 @@ def sendEmail(Status){
     emailext subject: "CI CD Update || Identity-Java || Job #${BUILD_NUMBER} || Status ${Status}",
                     body: "Project : ${JOB_NAME}<br>Build Status: ${Status}<br>Build URL: $BUILD_URL<br>Build Duration : ${currentBuild.durationString.replace(' and counting', '')}<br> Build Date : ${new Date().format('dd/MM/yyyy')}",mimeType: 'text/html',
                     replyTo: '$DEFAULT_REPLYTO',
-                    to: "tushar.khachane@magicedtech.com, harendra.kumar@magicedtech.com, shourya.taneja@magicedtech.com" ,
+                    to:"Youe email",
                     attachLog: true
 }
 def status
@@ -11,17 +11,17 @@ def status
 node {
     properties([
     parameters([
-        choice(choices: ['dev', 'qa'], description: "Please Select env", name: "Branch"),
-        string(name: "BUCKET", defaultValue: "cloudcoe-abp-wars", description: "bucketName"),
+
+        string(name: "BUCKET", defaultValue:"Your Bucket Value", description: "bucketName"),
         //string(name: "BRANCH", defaultValue: "dev", description: "branchName"),
-        string(name: "REGION", defaultValue: "ap-south-1", description: "regionName")
+        string(name: "REGION", defaultValue:#"Your value" , description: "regionName")
     ])
     ])
     def gradleHome = tool 'gradle6.3'
     try {
         stage('Clone Repository') { 
             cleanWs()
-            git url: 'https://gitlab.magicsw.com/accelerator/Identity/identity-java.git', branch: params.Branch , credentialsId: 'TusharGitlabKIPS'
+            git url: 'https://github.com/SG0520/Java-Identity-Management-System', branch: [[name: '*/main']]  , credentialsId: 'SG0520'
             //checkout changelog: false, poll: false, scm: [$class: 'GitSCM', branches: [[name: '*/master']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/Shivamrathi001/devops-webapp.git']]]
         }
         stage('Build') {
@@ -31,23 +31,23 @@ node {
             """
         }
         stage('Containerize'){
-            withDockerRegistry(credentialsId: 'ecr:ap-south-1:CloudCoe_ABP_ECR', url: 'https://619942913628.dkr.ecr.ap-south-1.amazonaws.com/accelerator') {
+            withDockerRegistry(credentialsId:#your Id, url: #your URL) {
                 sh """ #!/bin/bash
                 docker build -t "identity-java-${env.BUILD_ID}" .
                 docker images
-                docker tag "identity-java-${env.BUILD_ID}:latest" 619942913628.dkr.ecr.ap-south-1.amazonaws.com/accelerator:identity-java-${env.BUILD_ID}
-                docker push 619942913628.dkr.ecr.ap-south-1.amazonaws.com/accelerator:identity-java-${env.BUILD_ID}
-                docker rmi -f "identity-java-${env.BUILD_ID}" "619942913628.dkr.ecr.ap-south-1.amazonaws.com/accelerator:identity-java-${env.BUILD_ID}"
+                docker tag "identity-java-${env.BUILD_ID}:latest" <Your host>:<port>/identity-java-${env.BUILD_ID}:Tag
+                docker push <Your host>:<port>/identity-java-${env.BUILD_ID}:tag
+                docker rmi -f "identity-java-${env.BUILD_ID}" "Your host>:<port>/identity-java-${env.BUILD_ID}:tag"
                 echo ${env.BUILD_ID} > buildNumber.txt
                 """
             }
         }
         
         stage('Deploy') {
-                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'CloudCoe_ABP_ECR']]) {
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'Your Creds']]) {
                     def JOB_BASE_NAME = "${env.JOB_NAME}".split('/').last()
-                    def destinationFile = "${env.JOB_BASE_NAME}/${params.Branch}/${env.JOB_BASE_NAME}.zip"
-                    def versionLabel = "${env.JOB_BASE_NAME}#${params.Branch}#${env.BUILD_NUMBER}"
+                    def destinationFile = "${env.JOB_BASE_NAME}/[[name: '*/main']]/${env.JOB_BASE_NAME}.zip"
+                    def versionLabel = "${env.JOB_BASE_NAME}#[[name: '*/main']]#${env.BUILD_NUMBER}"
                     def description = "${env.BUILD_URL}"
                     sh """\
                             ls -larth
